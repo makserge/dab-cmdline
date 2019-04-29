@@ -34,21 +34,20 @@ void	print_ensembleData (FILE *f,
 	if (ensembleLabel == std::string (""))
 	   return;
 
-	fprintf (f, "\n\nEnsemble %s; ensembleId %X; channel %s; \n\n",
+	fprintf (f, "\"channel\": \"%s\", \"ensemble\": \"%s (%X)\"",
+	            currentChannel. c_str (),
 	            ensembleLabel. c_str (),
-	            ensembleId,
-	            currentChannel. c_str ());
+	            ensembleId);
 }
 
 void	print_audioheader (FILE *f) {
-	fprintf (f, "\nAudio services\nprogram name;country;serviceId;subchannelId;start address;length (CU); bit rate;DAB/DAB+; prot level; code rate; language; program type\n\n");
+	//fprintf (f, "\nAudio services\nprogram name;country;serviceId;subchannelId;start address;length (CU); bit rate;DAB/DAB+; prot level; code rate; language; program type\n\n");
 }
 
 void	print_audioService (FILE *f,
 	                    void *theRadio,
 	                    std::string serviceName,
 	                    audiodata *d) {
-bool	success;
 
 	if (!d -> defined)
 	   return;
@@ -57,9 +56,8 @@ bool	success;
 	                                              d -> protLevel);
 	std::string codeRate	= getCodeRate (d -> shortForm, d -> protLevel);
 	uint32_t serviceId	= dab_getSId (theRadio, serviceName. c_str ());
-	uint8_t countryId = (serviceId >> 12) & 0xF;
 	                          
-	fprintf (f, "%s;%X;%d;%d;%d;%d;%s;%s;%s;%s;\n",
+	fprintf (f, "[\"%s\", \"%X\", \"%d\", \"%d\", \"%d\", \"%d\", \"%s\", \"%s\", \"%s\", \"%s\"],\n",
 	             serviceName. c_str (),
 	             serviceId,
 	             d -> subchId,
@@ -81,7 +79,6 @@ void	print_dataService (FILE		*f,
 	                   std::string	serviceName,
 	                   uint8_t	compnr,
 	                   packetdata	*d) {
-bool	success;
 
 	if (!d -> defined)
 	   return;
@@ -91,7 +88,6 @@ bool	success;
 	std::string codeRate	= getCodeRate (d -> shortForm,
 	                                       d -> protLevel);
 	uint32_t serviceId	= dab_getSId (theRadio, serviceName. c_str ());
-	uint8_t countryId = (serviceId >> 12) & 0xF;
 	fprintf (f, "%s;%X;%d;%d;%d;%d;%s;%s;%s;%s;;\n",
 	             serviceName. c_str (),
 	             serviceId,

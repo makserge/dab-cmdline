@@ -177,7 +177,6 @@ int		theGain		= 35;	// scale = 0 .. 100
 int		lnaGain		= 40;
 int		vgaGain		= 40;
 #endif
-int16_t		latency		= 10;
 int16_t		timeSyncTime	= 5;
 int16_t		freqSyncTime	= 10;
 bool		autogain	= false;
@@ -185,7 +184,6 @@ int	opt;
 struct sigaction sigact;
 bandHandler	dabBand;
 deviceHandler	*theDevice;
-bool	err;
 
 	fprintf (stderr, "dab_scanner V 1.0alfa,\n\
 	                  Copyright 2018 J van Katwijk, Lazy Chair Computing\n\	                            2018 Hayati Ayguen\n");
@@ -320,8 +318,8 @@ bool	err;
 	if (autogain)
 	   theDevice	-> set_autogain (autogain);
 
+	fprintf (outFile, "[\n");
 	while (true) {
-	   bool	firstTime	= true;
 	   theDevice	-> stopReader ();
 	   int32_t frequency =
 	               dabBand. Frequency (theBand, theChannel);
@@ -367,6 +365,7 @@ bool	err;
 	   sleep (5);
 //
 //	print ensemble data here
+	   fprintf (outFile, "{");
 	   print_ensembleData (outFile,
                                theRadio,
 	                       theChannel,
@@ -374,6 +373,7 @@ bool	err;
 	                       ensembleId);
 
 	   print_audioheader (outFile);
+ 	   fprintf (outFile, ",\"programs\": [\n");
 	   for (int i = 0; i < programNames. size (); i ++) {
 	      if (is_audioService (theRadio, programNames [i]. c_str ())) {
 	         audiodata ad;
@@ -384,61 +384,17 @@ bool	err;
 	                             theRadio,
 	                             programNames [i]. c_str (),
 	                             &ad);
-	         for (int j = 1; j < 5; j ++) {
-	            packetdata pd;
-	            dataforDataService (theRadio,
-	                                programNames [i]. c_str (),
-                                        &pd, j);
-	            if (pd. defined)
-	               print_dataService (outFile,
-                                          theRadio,
-                                          programNames [i]. c_str (),
-                                          j,
-	                                  &pd);
-	         }
 	      }
 	   }
-
-	   for (int i = 0; i < programNames. size (); i ++) {
-	      if (is_dataService (theRadio, programNames [i]. c_str ())) {
-	         if (firstTime)
-	            print_dataHeader (outFile);
-	         firstTime	= false;
-	         for (int j = 0; j < 5; j ++) {
-                    packetdata pd;
-                    dataforDataService (theRadio,
-                                        programNames [i]. c_str (),
-                                        &pd, j);
-                    if (pd. defined)
-                       print_dataService (outFile,
-                                          theRadio,
-                                          programNames [i]. c_str (),
-                                          j,
-	                                  &pd);
-                 }
-	      }
-	      else
-	      if (is_audioService (theRadio, programNames [i]. c_str ())) {
-	         for (int j = 1; j < 5; j ++) {
-	            packetdata pd;
-	            dataforDataService (theRadio,
-	                                programNames [i]. c_str (),
-                                        &pd, j);
-	            if (pd. defined)
-	               print_dataService (outFile,
-                                          theRadio,
-                                          programNames [i]. c_str (),
-                                          j,
-	                                  &pd);
-	         }
-	      }
-	   }
+	   fprintf (outFile, "[]]},\n");
+	   
 	   theDevice	-> stopReader ();
 	   dabStop (theRadio);
 	   programNames. resize (0);
 	   programSIds.  resize (0);
 	   theChannel	= dabBand. nextChannel (theBand, theChannel);
 	}
+	fprintf (outFile, "{}]\n");
 
 	fclose (outFile);
 	theDevice	-> stopReader ();
@@ -460,4 +416,3 @@ void    printOptions (void) {
                         -F filename      in case the output is to a file\n\
                         -C start channel the start channel, default: 5A\n");
 }
-
